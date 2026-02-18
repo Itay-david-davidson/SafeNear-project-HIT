@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:latest
+    restart: always
+    container_name: mysql-ShelterProject
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=$MySQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MySQL_DATABASE
+    ports:
+      - $MYSQL_LOCAL_PORT:$MYSQL_DOCKER_PORT
+    volumes:
+      - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+
+  app:
+    depends_on:
+      - mysql
+    build: .
+    env_file:
+      - .env
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=$MYSQL_USER
+      - DB_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - DB_NAME=$MYSQL_DATABASE
+      - DB_PORT=$MYSQL_DOCKER_PORT
+volumes:
+  mysql_data:
