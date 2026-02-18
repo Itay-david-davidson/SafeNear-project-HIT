@@ -1,0 +1,29 @@
+{
+  "name": "sheltermonitor",
+  "version": "1.0.0",
+  "description": "Shelter monitor website for HIT Project",
+  "keywords": [
+    "express",
+    "MySQL",
+    "HIT"
+  ],
+  "homepage": "https://github.com/Itay-david-davidson/SafeNear-project-HIT#readme",
+  "bugs": {
+    "url": "https://github.com/Itay-david-davidson/SafeNear-project-HIT/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Itay-david-davidson/SafeNear-project-HIT.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
