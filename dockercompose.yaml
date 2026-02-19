@@ -16,12 +16,14 @@ services:
     volumes:
       - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: "exit 0"
 
   app:
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     build: ./ShelterMonitor
-    
     env_file:
       - .env
     ports:
