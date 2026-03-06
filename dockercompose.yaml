@@ -11,8 +11,6 @@ services:
       - MYSQL_DATABASE=$MYSQL_DATABASE
     networks:
       - ShelterNetwork
-    ports:
-      - $MYSQL_LOCAL_PORT:$MYSQL_DOCKER_PORT
     volumes:
       - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
@@ -27,7 +25,7 @@ services:
     env_file:
       - .env
     ports:
-      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+      - $NODE_DOCKER_PORT
     environment:
       - DB_HOST=mysql
       - DB_USER=root
