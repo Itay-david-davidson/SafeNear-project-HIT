@@ -1,10 +1,9 @@
 import db from '../utils/database.js';
-import User from '../models/users.js';
-
+import { User } from '../models/users.js';
 //TODO: figure out .json thingy
 export async function getUsers(req, res) {
     try {
-        const users = await User.fetchAll();
+        const [users] = await User.fetchAll();
         res.json(users);
     } catch (err) {
         console.log(err);

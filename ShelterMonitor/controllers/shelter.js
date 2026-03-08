@@ -3,7 +3,7 @@ import shelter from '../models/shelter.js';
 
 export async function getShelters(req, res) {
     try {
-        const shelters = await shelter.fetchAll();
+        const [shelters] = await shelter.fetchAll();
         res.json(shelters);
     } catch (err) {
         console.log(err);
