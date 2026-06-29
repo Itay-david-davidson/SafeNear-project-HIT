@@ -76,6 +76,21 @@ export async function deleteUser(req, res) {
     }
 };
 
+export async function getUserByUsername(req, res) {
+    try {
+        const username = req.params.username;
+        const [results, fields] = await db.execute('SELECT * FROM users WHERE username = ? LIMIT 1', [username]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: 'Error fetching user' });
+    }
+};
+
 export default {
     getUsers,
     getUserById,
