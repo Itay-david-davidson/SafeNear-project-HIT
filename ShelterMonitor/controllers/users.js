@@ -1,49 +1,53 @@
 import db from '../utils/database.js';
 import User from '../models/users.js';
+import { UnauthorizedError } from '../models/errors.js';
+import { getBearerToken } from './auth.js';
+import { getAdminAuth } from './auth.js';
 
 //TODO: figure out .json thingy
 export async function getUsers(req, res) {
-    try {
-        const users = await User.fetchAll();
-        res.json(users);
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error fetching users' });
-    }
+
+    const reqUserId = await getAdminAuth(req);
+    const users = await User.fetchAll();
+    res.json(users);
 }
 
 export async function getUserById(req, res) {
-    try {
+    const reqUserId = await getAdminAuth(req);
         const userId = req.params.id;
         const [results, fields] = await db.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
         if (results.length > 0) {
-            res.json(results[0]);
+            res.status(200).json(results[0]);
         } else {
-            res.status(404).json({ message: 'User not found' });
+            throw new NotFoundError('User not found');
         }
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error fetching user' });
-    }
 };
 
+export async function getUserAdmin(req, res) {
+        const userId = req.params.id;
+        const [results, fields] = await db.execute('SELECT admin FROM users WHERE id = ? LIMIT 1', [userId]);
+        if (results.length > 0) {
+            res.status(200).json({ admin: results[0].admin });
+        } else {
+            throw new NotFoundError('User not found');
+        }
+}
+
 export async function insertUser(req, res) {
-    try {
+
+        const reqUserId = await getAdminAuth(req);
         const username = req.body.username;
         const password = req.body.password;
         const admin = req.body.admin;
 
         const user = new User(username, password, admin);
         await user.save();
-        res.json({ message: 'User inserted successfully' });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error inserting user' });
-    }
+        res.status(201).json({ message: 'User inserted successfully' });
 }
 
 export async function updateUser(req, res) {
-    try {
+    const reqUserId = await getAdminAuth(req);
+
         const userId = req.params.id;
         const username = req.body.username;
         const password = req.body.password;
@@ -51,44 +55,32 @@ export async function updateUser(req, res) {
 
         const [results, fields] = await db.execute('UPDATE users SET username = ?, password = ?, admin = ? WHERE id = ?', [username, password, admin, userId]);
         if (results.affectedRows > 0) {
-            res.json({ message: 'User updated successfully' });
+            res.status(200).json({ message: 'User updated successfully' });
         } else {
-            res.status(404).json({ message: 'User not found' });
+            throw new NotFoundError('User not found');
         }
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error updating user' });
-    }
 };
 
 export async function deleteUser(req, res) {
-    try {
+        const reqUserId = await getAdminAuth(req);
         const userId = req.params.id;
         const [results, fields] = await db.execute('DELETE FROM users WHERE id = ?', [userId]);
         if (results.affectedRows > 0) {
-            res.json({ message: 'User deleted successfully' });
+            res.status(200).json({ message: 'User deleted successfully' });
         } else {
-            res.status(404).json({ message: 'User not found' });
+            throw new NotFoundError('User not found');
         }
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error deleting user' });
-    }
 };
 
 export async function getUserByUsername(req, res) {
-    try {
+    const reqUserId = await getAdminAuth(req);
         const username = req.params.username;
         const [results, fields] = await db.execute('SELECT * FROM users WHERE username = ? LIMIT 1', [username]);
         if (results.length > 0) {
-            res.json(results[0]);
+            res.status(200).json(results[0]);
         } else {
-            res.status(404).json({ message: 'User not found' });
+            throw new NotFoundError('User not found');
         }
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error fetching user' });
-    }
 };
 
 export default {

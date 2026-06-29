@@ -1,4 +1,5 @@
 import express from 'express';
+import authRoutes from './routes/authRoutes.js';
 
 const app = express();
 const port = process.env.NODE_DOCKER_PORT || 6969;
@@ -11,6 +12,7 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
+app.use('/api/auth', authRoutes);
 
 
 //error handling middleware

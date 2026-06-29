@@ -1,6 +1,8 @@
 import db from '../utils/database.js';
 import Map from '../models/map.js';
 
+import { getAdminAuth } from './auth.js';
+
 export async function getMaps(req, res) {
     try {
             const maps = await Map.fetchAll();
@@ -28,6 +30,7 @@ export async function getMapById(req, res) {
 
 export async function insertMap(req, res) {
     try {
+        const reqUserId = await getAdminAuth(req);
         const name = req.body.name;
         const filePath = req.body.filePath;
 
@@ -42,6 +45,7 @@ export async function insertMap(req, res) {
 
 export async function updateMap(req, res) {
     try {
+        const reqUserId = await getAdminAuth(req);
         const mapId = req.params.id;
         const name = req.body.name;
         const filePath = req.body.filePath;
@@ -60,6 +64,7 @@ export async function updateMap(req, res) {
 
 export async function deleteMap(req, res) {
     try {
+        const reqUserId = await getAdminAuth(req);
         const mapId = req.params.id;
 
         const [results, fields] = await db.execute('DELETE FROM maps WHERE id = ?', [mapId]);
