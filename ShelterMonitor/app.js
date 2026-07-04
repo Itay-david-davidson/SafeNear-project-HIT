@@ -1,9 +1,14 @@
 import express from 'express';
 import authRoutes from './routes/authRoutes.js';
+import shelterRoutes from './routes/shelterRoutes.js';
+import mapRoutes from './routes/mapsRoutes.js';
+  
 
 const app = express();
 const port = process.env.NODE_DOCKER_PORT || 6969;
 
+console.log(process.env.DB_HOST);
+  
 app.use(express.json());
 
 
@@ -13,6 +18,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/shelters', shelterRoutes);
+app.use('/api/maps', mapRoutes);
 
 
 //error handling middleware

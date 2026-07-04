@@ -1,8 +1,8 @@
 import db from '../utils/database.js';
-import shelter from '../models/shelter.js';
+import Shelter from '../models/shelter.js';
 
 export async function getShelters(req, res) {
-        const shelters = await shelter.fetchAll();
+        const shelters = await Shelter.fetchAll();
         res.json(shelters);
 };
 
@@ -23,7 +23,7 @@ export async function insertShelter(req, res) {
     const location = req.body.location;
     const mapID = req.body.mapID;
     
-    const newShelter = new shelter(name, open, location, mapID);
+    const newShelter = new Shelter(name, open, location, mapID);
     await newShelter.save();
     res.json({ message: 'Shelter inserted successfully' });
 };

@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import {makeJWT, verifyJWT, extractBearerToken} from './controllers/auth.js';
+import { makeJWT, verifyJWT, extractBearerToken } from './controllers/auth.js';
+import { BadRequestError } from './utils/errors.js';
 
 describe("JWT signing", () => {
   let jwt1
-let jwt2
+    let jwt2
 
   beforeAll(async () => {
       jwt1 = makeJWT("user1", 3600, "secretKey1");
@@ -12,12 +13,13 @@ let jwt2
   });
     
     it("should validate a valid JWT", () => {
-    const result = validateJWT(jwt1,"secretKey1");
+        const result = verifyJWT(jwt1, "secretKey1");
+        console.log(result);
     expect(result).toBe("user1");
   });
     
     it("should throw an error for an invalid JWT", () => {
-    expect(() => validateJWT(jwt1, "wrongSecretKey")).toThrow();
+    expect(() => verifyJWT(jwt1, "wrongSecretKey")).toThrow();
   });
 
 });

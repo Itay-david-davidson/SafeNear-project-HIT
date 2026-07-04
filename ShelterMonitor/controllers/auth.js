@@ -1,7 +1,8 @@
-import db from '../config/db.js';
-import { UnauthorizedError } from '../models/errors.js';
+import db from '../utils/database.js';
+import { UnauthorizedError, BadRequestError } from '../utils/errors.js';
 import { getUserByUsername } from './users.js';
 import jwt from 'jsonwebtoken';
+
 
 export async function login(req, res, next) {
     // Implementation for login function
@@ -25,17 +26,17 @@ export async function login(req, res, next) {
 
 
 // Function to generate JWT token
-export async function makeJWT(userID, expiresIn, secret) {
+export function makeJWT(userID, expiresIn = 3600, secret) {
     const payload = {
         sub: userID,
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + expiresIn, // Default expiration time of 1 hour
-    }
+    };
 
     return jwt.sign(payload, secret);
 }
 
-export async function verifyJWT(token, secret) {
+export function verifyJWT(token, secret) {
     try {
         const decoded = jwt.verify(token, secret);
         if (!decoded) {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getMaps,getMapById,insertMap,updateMap,deleteMap } from '../controllers/maps';
+import { getMaps,getMapById,insertMap,updateMap,deleteMap } from '../controllers/maps.js';
 const router = Router();
 
 router.get('/api/maps', getMaps);

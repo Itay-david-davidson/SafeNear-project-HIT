@@ -11,21 +11,25 @@ services:
       - MYSQL_DATABASE=$MYSQL_DATABASE
     networks:
       - ShelterNetwork
+    ports:
+      - "$MYSQL_DOCKER_PORT:$MYSQL_LOCAL_PORT"
     volumes:
       - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
 
   app:
     depends_on:
       mysql:
         condition: service_healthy
     build: ./ShelterMonitor
+    container_name: nodeServer-ShelterProject
     env_file:
       - .env
-    ports:
-      - $NODE_DOCKER_PORT
     environment:
       - DB_HOST=mysql
       - DB_USER=root
