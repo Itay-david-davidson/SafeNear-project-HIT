@@ -3,10 +3,10 @@ import { getShelters, getShelterById, insertShelter, updateShelter, deleteShelte
 
 const router = Router();
 
-router.get('/api/shelters', getShelters);
-router.get('/api/shelters/:id', getShelterById);
-router.post('/api/shelters', insertShelter);
-router.put('/api/shelters/:id', updateShelter);
-router.delete('/api/shelters/:id', deleteShelter);
+router.get('/', getShelters);
+router.get('/:id', getShelterById);
+router.post('/', insertShelter);
+router.put('/:id', updateShelter);
+router.delete('/:id', deleteShelter);
 
 export default router;
