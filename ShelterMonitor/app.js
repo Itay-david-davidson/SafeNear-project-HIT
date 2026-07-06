@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import authRoutes from './routes/authRoutes.js';
 import shelterRoutes from './routes/shelterRoutes.js';
@@ -11,7 +12,9 @@ console.log(process.env.DB_HOST);
   
 app.use(express.json());
 
-
+app.use('/maps', mapsRoutes);
+app.use('/users', userRoutes);     
+app.use('/shelters', shelterRoutes); 
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -46,4 +49,3 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
-

@@ -2,7 +2,7 @@ import db from '../utils/database.js';
 import Shelter from '../models/shelter.js';
 
 export async function getShelters(req, res) {
-        const shelters = await Shelter.fetchAll();
+        const [shelters] = await shelter.fetchAll();
         res.json(shelters);
 };
 

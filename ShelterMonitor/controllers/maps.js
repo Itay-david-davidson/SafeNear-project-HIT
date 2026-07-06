@@ -5,7 +5,7 @@ import { getAdminAuth } from './auth.js';
 
 export async function getMaps(req, res) {
     try {
-            const maps = await Map.fetchAll();
+            const [maps] = await Map.fetchAll();
             res.json(maps);
         } catch (err) {
             console.log(err);

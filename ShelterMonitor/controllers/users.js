@@ -8,9 +8,9 @@ import { getAdminAuth } from './auth.js';
 export async function getUsers(req, res) {
 
     const reqUserId = await getAdminAuth(req);
-    const users = await User.fetchAll();
+    const [users] = await User.fetchAll();
     res.json(users);
-}
+};
 
 export async function getUserById(req, res) {
     const reqUserId = await getAdminAuth(req);
