@@ -38,6 +38,24 @@ services:
       - DB_PORT=$MYSQL_DOCKER_PORT
     networks:
       - ShelterNetwork
+
+  web:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    build: ./ShelterMonitor-Web
+    container_name: web-ShelterProject
+    env_file:
+      - .env
+    environment:
+      - VITE_API_URL=http://localhost:$WEB_DOCKER_PORT
+    networks:
+      - ShelterNetwork
+    ports:
+      - "$WEB_DOCKER_PORT:$WEB_LOCAL_PORT"
+    
 volumes:
   mysql_data:
 

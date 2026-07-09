@@ -3,6 +3,8 @@ import express from 'express';
 import authRoutes from './routes/authRoutes.js';
 import shelterRoutes from './routes/shelterRoutes.js';
 import mapRoutes from './routes/mapsRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError } from './utils/errors.js';
   
 
 const app = express();
@@ -12,7 +14,7 @@ console.log(process.env.DB_HOST);
   
 app.use(express.json());
 
-app.use('/maps', mapsRoutes);
+app.use('/maps', mapRoutes);
 app.use('/users', userRoutes);     
 app.use('/shelters', shelterRoutes); 
 
