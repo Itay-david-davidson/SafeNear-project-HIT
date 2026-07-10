@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
+import LoginForm from './Login';
 
 function App() {
   const [count, setCount] = useState(0)

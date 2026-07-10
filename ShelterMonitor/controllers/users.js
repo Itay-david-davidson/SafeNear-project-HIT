@@ -12,6 +12,18 @@ export async function getUsers(req, res) {
     res.json(users);
 };
 
+export async function getUserByUsernameAndPassword(req, res) {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    const [results, fields] = await db.execute('SELECT * FROM users WHERE username = ? AND password = ? LIMIT 1', [username, password]);
+    if (results.length > 0) {
+        res.status(200).json(results[0]);
+    } else { 
+        throw new NotFoundError('User not found');  
+    }
+};
+
 export async function getUserById(req, res) {
     const reqUserId = await getAdminAuth(req);
         const userId = req.params.id;

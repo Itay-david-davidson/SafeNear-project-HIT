@@ -8,7 +8,7 @@ export async function login(req, res, next) {
     // Implementation for login function
     const { username, password } = req.body;
     try {
-        const [results, fields] = await getUserByUsername(username);
+        const [results, fields] = await getUserByUsernameAndPassword(username, password);
         if (results.length > 0) {
             // User found, proceed with login
             const token = await makeJWT(results[0].id, 3600, process.env.JWT_SECRET); // Token expires in 1 hour

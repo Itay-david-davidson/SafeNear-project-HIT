@@ -30,6 +30,8 @@ services:
     container_name: nodeServer-ShelterProject
     env_file:
       - .env
+    ports:
+      - "$NODE_DOCKER_PORT:$NODE_LOCAL_PORT"
     environment:
       - DB_HOST=mysql
       - DB_USER=root
@@ -38,6 +40,12 @@ services:
       - DB_PORT=$MYSQL_DOCKER_PORT
     networks:
       - ShelterNetwork
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:$NODE_DOCKER_PORT/"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
 
   web:
     depends_on:
