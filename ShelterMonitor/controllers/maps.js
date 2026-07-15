@@ -32,9 +32,9 @@ export async function insertMap(req, res) {
     try {
         const reqUserId = await getAdminAuth(req);
         const name = req.body.name;
-        const filePath = req.body.filePath;
+        const path = req.body.path;
 
-        const map = new Map(name, filePath);
+        const map = new Map(name, path);
         await map.save();
         res.json({ message: 'Map inserted successfully' });
     } catch (err) {
@@ -48,9 +48,9 @@ export async function updateMap(req, res) {
         const reqUserId = await getAdminAuth(req);
         const mapId = req.params.id;
         const name = req.body.name;
-        const filePath = req.body.filePath;
+        const path = req.body.path;
 
-        const [results, fields] = await db.execute('UPDATE maps SET name = ?, file_path = ? WHERE id = ?', [name, filePath, mapId]);
+        const [results, fields] = await db.execute('UPDATE maps SET name = ?, path = ? WHERE id = ?', [name, path, mapId]);
         if (results.affectedRows > 0) {
             res.json({ message: 'Map updated successfully' });
         } else {

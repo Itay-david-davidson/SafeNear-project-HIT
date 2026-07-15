@@ -10,9 +10,27 @@ export default defineConfig({
   strictPort: true,
  },
   server: {
-  host: '0.0.0.0',
-  port: 8080,
-  strictPort: true,
- },
+    host: '0.0.0.0',
+    port: 8080,
+    strictPort: true,
+    proxy: {
+      '/api': {
+        target: 'http://app:8080',
+        changeOrigin: true
+      },
+      '/shelters': {
+        target: 'http://app:8080',
+        changeOrigin: true
+      },
+      '/maps': {
+        target: 'http://app:8080',
+        changeOrigin: true
+      },
+      '/users': {
+        target: 'http://app:8080',
+        changeOrigin: true
+      }
+    }
+  },
 })
 

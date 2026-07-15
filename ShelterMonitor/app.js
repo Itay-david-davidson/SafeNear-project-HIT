@@ -8,11 +8,20 @@ import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError } fro
   
 
 const app = express();
-const port = process.env.NODE_DOCKER_PORT || 6969;
+const port = process.env.NODE_LOCAL_PORT || 8080;
 
-console.log(process.env.DB_HOST);
-  
 app.use(express.json());
+
+// Custom CORS middleware
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 app.use('/maps', mapRoutes);
 app.use('/users', userRoutes);     

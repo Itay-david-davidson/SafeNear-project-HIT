@@ -21,3 +21,5 @@ CREATE TABLE IF NOT EXISTS `maps` (
 );
 
 ALTER TABLE `shelters` ADD FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`);
+
+INSERT INTO users (username, password, admin) VALUES ('admin', 'admin123', true);

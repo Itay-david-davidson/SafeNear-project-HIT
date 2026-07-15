@@ -1,61 +1,103 @@
-import React, { useState } from 'react'  
+import React, { useState } from 'react';
 
-function LoginForm(props) {
+function LoginForm({ onLoginSuccess }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
-    //declares state and sets the initial state to null
-    const [username, setUsername] = useState(null);
-    const [password, setPassword] = useState(null);
-    const [error, setError] = useState(null);
-    const [processing, setProcessing] = useState(false);
-
-    //submit function
-    const onSubmit = e => {
-        e.preventDefault();
-        setProcessing(true);
-        signIn(username, password)
-            .then(() => {
-                setUsername(null);
-                setPassword(null);
-                setError(null);
-                setProcessing(false);
-                //push to dashboard
-            }).catch(err => {
-                setError(err.message);
-                setProcessing(false);
-            });
-    };
-    return (
-        < form >
-            <h1>Login</h1>
-            //display error message if there is an error
-            {error ? <h4>{error}</h4> : ''}
-            <input type='text' name='username' required placeholder='Username'
-                value={username} onChange={e => setUsername(e.currentTarget.value)} />
-            <input type='password' name='password' required placeholder='Password'
-                value={password} onChange={e => setPassword(e.currentTarget.value)} />
-            <button type='submit'>{processing ? 'Checking Credentials...' : 'Login'}</button>
-        </form >
-    );
-};
-
-
-const signIn = async (username, password) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ username, password }),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to sign in')
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError('Please fill in all fields.');
+      return;
     }
 
-    const data = await response.json()
-    setUser(data)
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to sign in');
+      }
+
+      if (onLoginSuccess) {
+        onLoginSuccess(data);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <form onSubmit={onSubmit} className="login-form">
+        <div className="login-header">
+          <div className="app-logo">🏠</div>
+          <h1>ShelterMonitor</h1>
+          <p>Sign in to manage shelters & maps</p>
+        </div>
+
+        {error && (
+          <div className="login-error">
+            <span className="error-icon">⚠️</span>
+            <span className="error-message">{error}</span>
+          </div>
+        )}
+
+        <div className="input-group">
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            required
+            placeholder="Enter username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={processing}
+          />
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={processing}
+          />
+        </div>
+
+        <button type="submit" className="login-button" disabled={processing}>
+          {processing ? (
+            <div className="loader-container">
+              <span className="loader-spinner"></span>
+              <span>Checking Credentials...</span>
+            </div>
+          ) : (
+            'Login to Dashboard'
+          )}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 export default LoginForm;

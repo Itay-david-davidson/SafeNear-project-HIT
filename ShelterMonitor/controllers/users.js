@@ -1,6 +1,6 @@
 import db from '../utils/database.js';
 import User from '../models/users.js';
-import { UnauthorizedError } from '../utils/errors.js';
+import { UnauthorizedError, NotFoundError } from '../utils/errors.js';
 import { getBearerToken } from './auth.js';
 import { getAdminAuth } from './auth.js';
 

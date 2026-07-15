@@ -1,13 +1,13 @@
 import db from '../utils/database.js';
 
 export class Map {
-    constructor( name, filePath) {
+    constructor( name, path) {
         this.name = name;
-        this.filePath = filePath;
+        this.path = path;
     }
 
     save() {
-        return db.execute('INSERT INTO maps (name, file_path) VALUES (?, ?)', [this.name, this.filePath]);
+        return db.execute('INSERT INTO maps (name, path) VALUES (?, ?)', [this.name, this.path]);
     };
 
     static fetchAll() {

@@ -16,6 +16,16 @@ export class User {
         return db.execute('SELECT * FROM users');
     };
 
+    static async findById(id) {
+        const [results] = await db.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+        return results[0] || null;
+    }
+
+    static async findByUsernameAndPassword(username, password) {
+        const [results] = await db.execute('SELECT * FROM users WHERE username = ? AND password = ? LIMIT 1', [username, password]);
+        return results[0] || null;
+    }
+
 };
 
 export default User;

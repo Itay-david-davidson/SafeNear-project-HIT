@@ -1,8 +1,10 @@
 import db from '../utils/database.js';
 import Shelter from '../models/shelter.js';
+import { getAdminAuth } from './auth.js';
+import { NotFoundError } from '../utils/errors.js';
 
 export async function getShelters(req, res) {
-        const [shelters] = await shelter.fetchAll();
+        const [shelters] = await Shelter.fetchAll();
         res.json(shelters);
 };
 

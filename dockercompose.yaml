@@ -12,7 +12,7 @@ services:
     networks:
       - ShelterNetwork
     ports:
-      - "$MYSQL_DOCKER_PORT:$MYSQL_LOCAL_PORT"
+      - "$MYSQL_LOCAL_PORT:$MYSQL_DOCKER_PORT"
     volumes:
       - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
@@ -41,7 +41,7 @@ services:
     networks:
       - ShelterNetwork
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:$NODE_DOCKER_PORT/"]
+      test: ["CMD", "curl", "-f", "http://localhost:$NODE_LOCAL_PORT/"]
       interval: 5s
       timeout: 2s
       retries: 5
@@ -58,7 +58,7 @@ services:
     env_file:
       - .env
     environment:
-      - VITE_API_URL=http://localhost:$WEB_DOCKER_PORT
+      - VITE_API_URL=http://localhost:$NODE_DOCKER_PORT
     networks:
       - ShelterNetwork
     ports:
