@@ -360,6 +360,8 @@ body {
 .content-header {
   margin-bottom: 28px;
   text-align: left;
+  position: relative;
+  z-index: 100;
 }
 
 .content-header h1 {
