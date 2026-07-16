@@ -3,57 +3,69 @@ import Shelter from '../models/shelter.js';
 import { getAdminAuth } from './auth.js';
 import { NotFoundError } from '../utils/errors.js';
 
-export async function getShelters(req, res) {
+export async function getShelters(req, res, next) {
+    try {
         const [shelters] = await Shelter.fetchAll();
         res.json(shelters);
-};
-
-export async function getShelterById(req, res) {
-    const shelterId = req.params.id;
-    const [results, fields] = await db.execute('SELECT * FROM shelters WHERE id = ? LIMIT 1', [shelterId]);
-    if (results.length > 0) {
-        res.json(results[0]);
-    } else {
-        throw new NotFoundError('Shelter not found');
+    } catch (err) {
+        next(err);
     }
 };
 
-export async function insertShelter(req, res) {
-    const reqUserId = await getAdminAuth(req);
-    const name = req.body.name;
-    const open = req.body.open;
-    const location = req.body.location;
-    const mapID = req.body.mapID;
-    
-    const newShelter = new Shelter(name, open, location, mapID);
-    await newShelter.save();
-    res.json({ message: 'Shelter inserted successfully' });
-};
-
-export async function updateShelter(req, res) {
-    const reqUserId = await getAdminAuth(req);
-    const shelterId = req.params.id;
-    const name = req.body.name;
-    const open = req.body.open;
-    const location = req.body.location;
-    const mapID = req.body.mapID;
-
-    const [results, fields] = await db.execute('UPDATE shelters SET name = ?, open = ?, location = ?, map_id = ? WHERE id = ?', [name, open, location, mapID, shelterId]);
-    if (results.affectedRows > 0) {
-        res.json({ message: 'Shelter updated successfully' });
-    } else {
-        throw new NotFoundError('Shelter not found');
+export async function getShelterById(req, res, next) {
+    try {
+        const shelterId = req.params.id;
+        const [results, fields] = await db.execute('SELECT * FROM shelters WHERE id = ? LIMIT 1', [shelterId]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            throw new NotFoundError('Shelter not found');
+        }
+    } catch (err) {
+        next(err);
     }
 };
 
-export async function deleteShelter(req, res) {
-    const reqUserId = await getAdminAuth(req);
-    const shelterId = req.params.id;
-    const [results, fields] = await db.execute('DELETE FROM shelters WHERE id = ?', [shelterId]);
-    if (results.affectedRows > 0) {
-        res.json({ message: 'Shelter deleted successfully' });
-    } else {
-        throw new NotFoundError('Shelter not found');
+export async function insertShelter(req, res, next) {
+    try {
+        const { name, open, location, mapID, x = null, y = null } = req.body;
+        const newShelter = new Shelter(name, open, location, mapID, x, y);
+        await newShelter.save();
+        res.json({ message: 'Shelter inserted successfully' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export async function updateShelter(req, res, next) {
+    try {
+        const shelterId = req.params.id;
+        const { name, open, location, mapID, x = null, y = null } = req.body;
+        const [results] = await db.execute(
+            'UPDATE shelters SET name = ?, open = ?, location = ?, map_id = ?, x = ?, y = ? WHERE id = ?',
+            [name, open, location, mapID, x, y, shelterId]
+        );
+        if (results.affectedRows > 0) {
+            res.json({ message: 'Shelter updated successfully' });
+        } else {
+            throw new NotFoundError('Shelter not found');
+        }
+    } catch (err) {
+        next(err);
+    }
+};
+
+export async function deleteShelter(req, res, next) {
+    try {
+        const shelterId = req.params.id;
+        const [results] = await db.execute('DELETE FROM shelters WHERE id = ?', [shelterId]);
+        if (results.affectedRows > 0) {
+            res.json({ message: 'Shelter deleted successfully' });
+        } else {
+            throw new NotFoundError('Shelter not found');
+        }
+    } catch (err) {
+        next(err);
     }
 };
 

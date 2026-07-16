@@ -2,8 +2,10 @@ CREATE TABLE IF NOT EXISTS `shelters` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(20) UNIQUE,
   `open` boolean DEFAULT false COMMENT 'true for open',
-  `location` varchar(20) NOT NULL,
-  `map_id` integer NOT NULL
+  `location` varchar(255) NOT NULL,
+  `map_id` integer NOT NULL,
+  `x` INT DEFAULT NULL COMMENT 'X position on map image (0-10000 = 0-100%)',
+  `y` INT DEFAULT NULL COMMENT 'Y position on map image (0-10000 = 0-100%)'
 );
 
 CREATE TABLE IF NOT EXISTS `users` (

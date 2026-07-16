@@ -5,7 +5,7 @@ function Dashboard({ user, token, onLogout }) {
   const [shelters, setShelters] = useState([]);
   const [maps, setMaps] = useState([]);
   const [users, setUsers] = useState([]);
-  
+
   // Loading & Error States
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,13 +18,27 @@ function Dashboard({ user, token, onLogout }) {
 
   const [showMapModal, setShowMapModal] = useState(false);
   const [editingMap, setEditingMap] = useState(null);
-  const [mapForm, setMapForm] = useState({ name: '', path: '' });
+  const [mapForm, setMapForm] = useState({ name: '', path: '', mapFile: null });
+  const [selectedMap, setSelectedMap] = useState(null);
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [userForm, setUserForm] = useState({ username: '', password: '', admin: false });
 
+  // For adding shelter from map coordinates
+  const [addingShelterCoords, setAddingShelterCoords] = useState(null);
+  const [isRelocating, setIsRelocating] = useState(false);
+
   const isAdmin = user && (user.admin === 1 || user.admin === true);
+
+  const fetchWithAuth = async (url, options = {}) => {
+    const res = await fetch(url, options);
+    if (res.status === 401 || res.status === 403) {
+      onLogout();
+      throw new Error('Session expired or unauthorized. Please log in again.');
+    }
+    return res;
+  };
 
   // Fetch Data
   const fetchData = async () => {
@@ -45,7 +59,7 @@ function Dashboard({ user, token, onLogout }) {
 
       // Fetch Users (Requires Admin)
       if (isAdmin) {
-        const resUsers = await fetch('/users', {
+        const resUsers = await fetchWithAuth('/users', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resUsers.ok) {
@@ -80,9 +94,9 @@ function Dashboard({ user, token, onLogout }) {
     setError(null);
     const method = editingShelter ? 'PUT' : 'POST';
     const url = editingShelter ? `/api/shelters/${editingShelter.id}` : '/api/shelters';
-    
+
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +106,9 @@ function Dashboard({ user, token, onLogout }) {
           name: shelterForm.name,
           open: shelterForm.open ? 1 : 0,
           location: shelterForm.location,
-          mapID: parseInt(shelterForm.mapID, 10)
+          mapID: parseInt(shelterForm.mapID, 10),
+          x: shelterForm.x !== undefined ? shelterForm.x : null,
+          y: shelterForm.y !== undefined ? shelterForm.y : null
         })
       });
 
@@ -102,7 +118,8 @@ function Dashboard({ user, token, onLogout }) {
       showNotification(editingShelter ? 'Shelter updated successfully!' : 'Shelter added successfully!');
       setShowShelterModal(false);
       setEditingShelter(null);
-      setShelterForm({ name: '', open: false, location: '', mapID: '' });
+      setShelterForm({ name: '', open: false, location: '', mapID: '', x: null, y: null });
+      setAddingShelterCoords(null);
       fetchData();
     } catch (err) {
       showNotification(err.message, true);
@@ -112,7 +129,7 @@ function Dashboard({ user, token, onLogout }) {
   const handleToggleShelterStatus = async (shelter) => {
     if (!isAdmin) return;
     try {
-      const response = await fetch(`/api/shelters/${shelter.id}`, {
+      const response = await fetchWithAuth(`/api/shelters/${shelter.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +139,9 @@ function Dashboard({ user, token, onLogout }) {
           name: shelter.name,
           open: shelter.open ? 0 : 1, // Toggle
           location: shelter.location,
-          mapID: shelter.map_id
+          mapID: shelter.map_id,
+          x: shelter.x !== undefined ? shelter.x : null,
+          y: shelter.y !== undefined ? shelter.y : null
         })
       });
 
@@ -142,7 +161,9 @@ function Dashboard({ user, token, onLogout }) {
       name: shelter.name,
       open: shelter.open === 1 || shelter.open === true,
       location: shelter.location,
-      mapID: shelter.map_id || ''
+      mapID: shelter.map_id || '',
+      x: shelter.x !== undefined ? shelter.x : null,
+      y: shelter.y !== undefined ? shelter.y : null
     });
     setShowShelterModal(true);
   };
@@ -150,7 +171,7 @@ function Dashboard({ user, token, onLogout }) {
   const handleDeleteShelter = async (id) => {
     if (!window.confirm('Are you sure you want to delete this shelter?')) return;
     try {
-      const response = await fetch(`/api/shelters/${id}`, {
+      const response = await fetchWithAuth(`/api/shelters/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -171,16 +192,21 @@ function Dashboard({ user, token, onLogout }) {
     const url = editingMap ? `/api/maps/${editingMap.id}` : '/api/maps';
 
     try {
-      const response = await fetch(url, {
+      const formData = new FormData();
+      formData.append('name', mapForm.name);
+      
+      if (mapForm.mapFile) {
+        formData.append('mapFile', mapForm.mapFile);
+      } else {
+        formData.append('path', mapForm.path);
+      }
+
+      const response = await fetchWithAuth(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          name: mapForm.name,
-          path: mapForm.path
-        })
+        body: formData
       });
 
       const data = await response.json();
@@ -189,7 +215,7 @@ function Dashboard({ user, token, onLogout }) {
       showNotification(editingMap ? 'Map updated successfully!' : 'Map added successfully!');
       setShowMapModal(false);
       setEditingMap(null);
-      setMapForm({ name: '', path: '' });
+      setMapForm({ name: '', path: '', mapFile: null });
       fetchData();
     } catch (err) {
       showNotification(err.message, true);
@@ -198,14 +224,14 @@ function Dashboard({ user, token, onLogout }) {
 
   const handleEditMapClick = (map) => {
     setEditingMap(map);
-    setMapForm({ name: map.name, path: map.path });
+    setMapForm({ name: map.name, path: map.path, mapFile: null });
     setShowMapModal(true);
   };
 
   const handleDeleteMap = async (id) => {
     if (!window.confirm('Are you sure you want to delete this map? This may cause shelter database foreign key constraints errors if shelters reference this map.')) return;
     try {
-      const response = await fetch(`/api/maps/${id}`, {
+      const response = await fetchWithAuth(`/api/maps/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -226,7 +252,7 @@ function Dashboard({ user, token, onLogout }) {
     const url = editingUser ? `/users/${editingUser.id}` : '/users';
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -295,51 +321,68 @@ function Dashboard({ user, token, onLogout }) {
   const totalMaps = maps.length;
   const totalUsers = users.length;
 
+  // Map Click Handler for Coordinates
+  const handleMapCanvasClick = (e, mapId) => {
+    if (!isAdmin) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * 10000);
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * 10000);
+
+    if (isRelocating) {
+      setShelterForm({ ...shelterForm, mapID: mapId, x, y });
+      setIsRelocating(false);
+      setShowShelterModal(true);
+    } else {
+      setAddingShelterCoords({ x, y });
+      setShelterForm({ name: '', open: false, location: '', mapID: mapId, x, y });
+      setEditingShelter(null);
+      setShowShelterModal(true);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       {/* Sidebar Navigation */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-brand">
-          <span className="brand-logo">🛡️</span>
-          <h2>SafeNear</h2>
+          <span className="brand-logo">Shelter-Monitor</span>
         </div>
         <div className="user-profile">
-          <div className="avatar">👤</div>
           <div className="user-details">
             <h3 className="username">{user?.username}</h3>
             <span className="role">{isAdmin ? 'Administrator' : 'Standard User'}</span>
           </div>
         </div>
         <nav className="sidebar-menu">
-          <button 
+          <button
             className={`menu-item ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            📊 Overview
+            Overview
           </button>
-          <button 
+          <button
             className={`menu-item ${activeTab === 'shelters' ? 'active' : ''}`}
             onClick={() => setActiveTab('shelters')}
           >
-            🏠 Shelters
+            Shelters
           </button>
-          <button 
+          <button
             className={`menu-item ${activeTab === 'maps' ? 'active' : ''}`}
             onClick={() => setActiveTab('maps')}
           >
-            🗺️ Maps
+            Maps
           </button>
           {isAdmin && (
-            <button 
+            <button
               className={`menu-item ${activeTab === 'users' ? 'active' : ''}`}
               onClick={() => setActiveTab('users')}
             >
-              👥 User Management
+              User Management
             </button>
           )}
         </nav>
         <button className="logout-btn" onClick={onLogout}>
-          🚪 Sign Out
+          Sign Out
         </button>
       </aside>
 
@@ -348,13 +391,11 @@ function Dashboard({ user, token, onLogout }) {
         {/* Status Alerts */}
         {error && (
           <div className="alert alert-danger">
-            <span className="alert-icon">⚠️</span>
             <p>{error}</p>
           </div>
         )}
         {successMsg && (
           <div className="alert alert-success">
-            <span className="alert-icon">✅</span>
             <p>{successMsg}</p>
           </div>
         )}
@@ -369,28 +410,24 @@ function Dashboard({ user, token, onLogout }) {
 
             <div className="stats-grid">
               <div className="stat-card accent-blue">
-                <div className="stat-icon">🏠</div>
                 <div className="stat-info">
                   <h3>Total Shelters</h3>
                   <span className="stat-value">{totalShelters}</span>
                 </div>
               </div>
               <div className="stat-card accent-green">
-                <div className="stat-icon">🟢</div>
                 <div className="stat-info">
                   <h3>Open Shelters</h3>
                   <span className="stat-value">{openShelters}</span>
                 </div>
               </div>
               <div className="stat-card accent-red">
-                <div className="stat-icon">🔴</div>
                 <div className="stat-info">
                   <h3>Closed Shelters</h3>
                   <span className="stat-value">{closedShelters}</span>
                 </div>
               </div>
               <div className="stat-card accent-purple">
-                <div className="stat-icon">🗺️</div>
                 <div className="stat-info">
                   <h3>Total Maps</h3>
                   <span className="stat-value">{totalMaps}</span>
@@ -424,7 +461,7 @@ function Dashboard({ user, token, onLogout }) {
                   setShelterForm({ name: '', open: false, location: '', mapID: maps[0]?.id || '' });
                   setShowShelterModal(true);
                 }}>
-                  ➕ Add New Shelter
+                  Add New Shelter
                 </button>
               )}
             </header>
@@ -451,25 +488,25 @@ function Dashboard({ user, token, onLogout }) {
                           <td>{shelter.id}</td>
                           <td className="bold">{shelter.name}</td>
                           <td>
-                            <span 
+                            <span
                               className={`status-badge ${shelter.open === 1 || shelter.open === true ? 'status-open' : 'status-closed'} ${isAdmin ? 'interactive' : ''}`}
                               onClick={() => handleToggleShelterStatus(shelter)}
                               title={isAdmin ? "Click to toggle availability status" : ""}
                             >
-                              {shelter.open === 1 || shelter.open === true ? '🟢 Open' : '🔴 Closed'}
+                              {shelter.open === 1 || shelter.open === true ? 'Open' : 'Closed'}
                             </span>
                           </td>
                           <td>{shelter.location}</td>
                           <td>
                             <span className="map-badge">
-                              🗺️ {getMapName(shelter.map_id)}
+                              {getMapName(shelter.map_id)}
                             </span>
                           </td>
                           {isAdmin && (
                             <td>
                               <div className="action-buttons">
-                                <button className="btn-icon-edit" onClick={() => handleEditShelterClick(shelter)}>✏️ Edit</button>
-                                <button className="btn-icon-delete" onClick={() => handleDeleteShelter(shelter.id)}>🗑️ Delete</button>
+                                <button className="btn-icon-edit" onClick={() => handleEditShelterClick(shelter)}>Edit</button>
+                                <button className="btn-icon-delete" onClick={() => handleDeleteShelter(shelter.id)}>Delete</button>
                               </div>
                             </td>
                           )}
@@ -491,38 +528,117 @@ function Dashboard({ user, token, onLogout }) {
                 <h1>Structural Layout Maps</h1>
                 <p>Manage and view layout drawings for safe locations.</p>
               </div>
-              {isAdmin && (
-                <button className="btn btn-primary" onClick={() => {
-                  setEditingMap(null);
-                  setMapForm({ name: '', path: '' });
-                  setShowMapModal(true);
-                }}>
-                  ➕ Add New Map
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {selectedMap && (
+                  <button className="btn btn-secondary" onClick={() => setSelectedMap(null)}>
+                    ⬅ Back to Maps
+                  </button>
+                )}
+                {isAdmin && (
+                  <button className="btn btn-primary" onClick={() => {
+                    setEditingMap(null);
+                    setMapForm({ name: '', path: '', mapFile: null });
+                    setShowMapModal(true);
+                  }}>
+                    Add New Map
+                  </button>
+                )}
+              </div>
             </header>
 
-            <div className="maps-grid">
-              {maps.map((map) => (
-                <div key={map.id} className="map-card">
-                  <div className="map-preview">
-                    <span className="map-placeholder-icon">🗺️</span>
-                    <span className="map-filename">{map.path}</span>
+            {!selectedMap ? (
+              <div className="maps-grid">
+                {maps.map((map) => (
+                  <div key={map.id} className="map-card" style={{ cursor: 'pointer' }} onClick={(e) => {
+                    if (e.target.tagName !== 'BUTTON') setSelectedMap(map);
+                  }}>
+                    <div className="map-preview">
+                      <img src={`/uploads/${map.path}`} alt={map.name} className="map-preview-img" onError={(e) => { e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'block'; }} />
+                      <span className="map-filename" style={{marginTop: 'auto'}}>{map.path}</span>
+                    </div>
+                    <div className="map-info">
+                      <h3>{map.name}</h3>
+                      <p>Map ID: {map.id}</p>
+                      {isAdmin && (
+                        <div className="map-actions">
+                          <button className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleEditMapClick(map); }}>Edit</button>
+                          <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); handleDeleteMap(map.id); }}>Delete</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="map-info">
-                    <h3>{map.name}</h3>
-                    <p>Map ID: {map.id}</p>
-                    {isAdmin && (
-                      <div className="map-actions">
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleEditMapClick(map)}>Edit</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteMap(map.id)}>Delete</button>
-                      </div>
+                ))}
+                {maps.length === 0 && <p className="empty-text">No layout maps available.</p>}
+              </div>
+            ) : (
+              <div className="map-detail-layout">
+                {isAdmin && isRelocating && (
+                  <div className="alert alert-info" style={{marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span>Click anywhere on the map to set the new location for <strong>{shelterForm.name || 'the shelter'}</strong>.</span>
+                    <button className="btn btn-secondary" onClick={() => {
+                      setIsRelocating(false);
+                      setShowShelterModal(true);
+                    }}>Cancel Picking</button>
+                  </div>
+                )}
+                <div
+                  className={`map-canvas-wrapper ${isAdmin ? 'admin-mode' : ''} ${isRelocating ? 'relocating-mode' : ''}`}
+                  onClick={(e) => handleMapCanvasClick(e, selectedMap.id)}
+                  style={isRelocating ? { cursor: 'crosshair', border: '2px solid #3b82f6' } : {}}
+                >
+                  <img src={`/uploads/${selectedMap.path}`} alt={selectedMap.name} className="map-canvas-img" />
+
+                  {/* Render Shelters on Map */}
+                  {shelters.filter(s => s.map_id === selectedMap.id && s.x !== null && s.y !== null).map(shelter => (
+                    <div
+                      key={shelter.id}
+                      className={`shelter-pin ${shelter.open ? 'pin-open' : 'pin-closed'}`}
+                      style={{ left: `${shelter.x / 100}%`, top: `${shelter.y / 100}%` }}
+                      title={`${shelter.name} - ${shelter.location}`}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent map click
+                        if (isAdmin) {
+                          handleToggleShelterStatus(shelter);
+                        }
+                      }}
+                    >
+                      <div className="pin-dot"></div>
+                      <span className="pin-name">{shelter.name}</span>
+                    </div>
+                  ))}
+
+                  {isAdmin && (
+                    <div className="map-add-hint">
+                      Click anywhere on the map to place a new shelter
+                    </div>
+                  )}
+                </div>
+
+                <div className="map-shelter-list">
+                  <div className="map-shelter-list-header">
+                    <h3>Shelters in this Area</h3>
+                  </div>
+                  <div className="map-shelter-items">
+                    {shelters.filter(s => s.map_id === selectedMap.id).length === 0 ? (
+                      <p className="empty-text" style={{ padding: '15px', fontSize: '13px' }}>No shelters placed on this map yet.</p>
+                    ) : (
+                      shelters.filter(s => s.map_id === selectedMap.id).map(shelter => (
+                        <div key={shelter.id} className="map-shelter-item" onClick={() => isAdmin && handleEditShelterClick(shelter)}>
+                          <div className={`shelter-status-dot ${shelter.open ? 'dot-open' : 'dot-closed'}`}></div>
+                          <div className="shelter-item-details">
+                            <strong>{shelter.name}</strong>
+                            <small>{shelter.location}</small>
+                          </div>
+                          <span className={`placed-badge ${shelter.x !== null ? '' : 'unplaced'}`}>
+                            {shelter.x !== null ? 'Placed' : 'Not Placed'}
+                          </span>
+                        </div>
+                      ))
                     )}
                   </div>
                 </div>
-              ))}
-              {maps.length === 0 && <p className="empty-text">No layout maps available.</p>}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -539,7 +655,7 @@ function Dashboard({ user, token, onLogout }) {
                 setUserForm({ username: '', password: '', admin: false });
                 setShowUserModal(true);
               }}>
-                ➕ Register New User
+                Register New User
               </button>
             </header>
 
@@ -562,15 +678,15 @@ function Dashboard({ user, token, onLogout }) {
                         <td className="bold">{targetUser.username}</td>
                         <td>
                           <span className={`role-badge ${targetUser.admin === 1 || targetUser.admin === true ? 'role-admin' : 'role-user'}`}>
-                            {targetUser.admin === 1 || targetUser.admin === true ? '👑 Admin' : '👤 User'}
+                            {targetUser.admin === 1 || targetUser.admin === true ? 'Admin' : 'User'}
                           </span>
                         </td>
                         <td>{targetUser.created_at ? new Date(targetUser.created_at).toLocaleDateString() : 'N/A'}</td>
                         <td>
                           <div className="action-buttons">
-                            <button className="btn-icon-edit" onClick={() => handleEditUserClick(targetUser)}>✏️ Edit</button>
+                            <button className="btn-icon-edit" onClick={() => handleEditUserClick(targetUser)}>Edit</button>
                             {targetUser.id !== user.id && (
-                              <button className="btn-icon-delete" onClick={() => handleDeleteUser(targetUser.id)}>🗑️ Delete</button>
+                              <button className="btn-icon-delete" onClick={() => handleDeleteUser(targetUser.id)}>Delete</button>
                             )}
                           </div>
                         </td>
@@ -592,13 +708,13 @@ function Dashboard({ user, token, onLogout }) {
           <div className="modal-content">
             <div className="modal-header">
               <h2>{editingShelter ? 'Edit Shelter' : 'Create Shelter'}</h2>
-              <button className="close-btn" onClick={() => setShowShelterModal(false)}>✖</button>
+              <button className="close-btn" onClick={() => setShowShelterModal(false)}>X</button>
             </div>
             <form onSubmit={handleShelterSubmit}>
               <div className="form-group">
                 <label>Shelter Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   placeholder="e.g. Shelter Blue"
                   value={shelterForm.name}
@@ -607,8 +723,8 @@ function Dashboard({ user, token, onLogout }) {
               </div>
               <div className="form-group">
                 <label>Location Info</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   placeholder="e.g. Block C Room 10"
                   value={shelterForm.location}
@@ -617,7 +733,7 @@ function Dashboard({ user, token, onLogout }) {
               </div>
               <div className="form-group">
                 <label>Layout Map Reference</label>
-                <select 
+                <select
                   required
                   value={shelterForm.mapID}
                   onChange={e => setShelterForm({ ...shelterForm, mapID: e.target.value })}
@@ -629,15 +745,31 @@ function Dashboard({ user, token, onLogout }) {
                 </select>
               </div>
               <div className="form-group checkbox-group">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="shelter-open"
                   checked={shelterForm.open}
                   onChange={e => setShelterForm({ ...shelterForm, open: e.target.checked })}
                 />
                 <label htmlFor="shelter-open">Mark Shelter as Open / Ready for Reception</label>
               </div>
+
+              {shelterForm.x !== null && shelterForm.y !== null && (
+                <div className="coords-display">
+                  <span>Coordinates set: X {Math.round(shelterForm.x / 100)}%, Y {Math.round(shelterForm.y / 100)}%</span>
+                  <button type="button" className="clear-coords-btn" onClick={() => setShelterForm({ ...shelterForm, x: null, y: null })}>
+                    Clear Position
+                  </button>
+                </div>
+              )}
               <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" style={{marginRight: 'auto', background: '#3b82f6', color: 'white'}} onClick={() => {
+                  setShowShelterModal(false);
+                  setIsRelocating(true);
+                  setActiveTab('maps');
+                  const mapToSelect = maps.find(m => m.id === Number(shelterForm.mapID));
+                  if (mapToSelect) setSelectedMap(mapToSelect);
+                }}>Pick Location on Map</button>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowShelterModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary">{editingShelter ? 'Save Changes' : 'Create Shelter'}</button>
               </div>
@@ -652,13 +784,13 @@ function Dashboard({ user, token, onLogout }) {
           <div className="modal-content">
             <div className="modal-header">
               <h2>{editingMap ? 'Edit Map Layout' : 'Add New Map Layout'}</h2>
-              <button className="close-btn" onClick={() => setShowMapModal(false)}>✖</button>
+              <button className="close-btn" onClick={() => setShowMapModal(false)}>X</button>
             </div>
             <form onSubmit={handleMapSubmit}>
               <div className="form-group">
                 <label>Map Location Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   placeholder="e.g. Main Auditorium"
                   value={mapForm.name}
@@ -666,14 +798,43 @@ function Dashboard({ user, token, onLogout }) {
                 />
               </div>
               <div className="form-group">
-                <label>Map Drawing Path / URL</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. main_auditorium_blueprint.png"
-                  value={mapForm.path}
-                  onChange={e => setMapForm({ ...mapForm, path: e.target.value })}
-                />
+                <label>Map Image (Drag & Drop or Click)</label>
+                <div 
+                  className="drop-zone"
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('dragover'); }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('dragover'); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('dragover');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setMapForm({ ...mapForm, mapFile: e.dataTransfer.files[0], path: e.dataTransfer.files[0].name });
+                    }
+                  }}
+                  onClick={(e) => e.currentTarget.querySelector('input[type="file"]').click()}
+                  style={{
+                    border: '2px dashed #4b5563', borderRadius: '6px', padding: '30px', textAlign: 'center', 
+                    color: '#9ca3af', cursor: 'pointer', transition: 'all 0.2s', background: 'rgba(30, 41, 59, 0.5)'
+                  }}
+                >
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    style={{display: 'none'}}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setMapForm({ ...mapForm, mapFile: e.target.files[0], path: e.target.files[0].name });
+                      }
+                    }}
+                  />
+                  {mapForm.mapFile ? (
+                    <span style={{color: '#e2e8f0'}}>Selected file: {mapForm.mapFile.name}</span>
+                  ) : mapForm.path ? (
+                    <span style={{color: '#e2e8f0'}}>Current file: {mapForm.path} (Click to change)</span>
+                  ) : (
+                    <span>Drag and drop an image file here, or click to select</span>
+                  )}
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowMapModal(false)}>Cancel</button>
@@ -690,13 +851,13 @@ function Dashboard({ user, token, onLogout }) {
           <div className="modal-content">
             <div className="modal-header">
               <h2>{editingUser ? 'Edit User Credentials' : 'Register New User'}</h2>
-              <button className="close-btn" onClick={() => setShowUserModal(false)}>✖</button>
+              <button className="close-btn" onClick={() => setShowUserModal(false)}>X</button>
             </div>
             <form onSubmit={handleUserSubmit}>
               <div className="form-group">
                 <label>Username</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   placeholder="e.g. sarah_connor"
                   value={userForm.username}
@@ -705,8 +866,8 @@ function Dashboard({ user, token, onLogout }) {
               </div>
               <div className="form-group">
                 <label>{editingUser ? 'Password (leave empty to keep unchanged)' : 'Password'}</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required={!editingUser}
                   placeholder={editingUser ? '••••••••' : 'Enter strong password'}
                   value={userForm.password}
@@ -714,8 +875,8 @@ function Dashboard({ user, token, onLogout }) {
                 />
               </div>
               <div className="form-group checkbox-group">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="user-admin"
                   checked={userForm.admin}
                   onChange={e => setUserForm({ ...userForm, admin: e.target.checked })}

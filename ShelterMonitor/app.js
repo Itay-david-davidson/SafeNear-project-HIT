@@ -1,10 +1,15 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import shelterRoutes from './routes/shelterRoutes.js';
 import mapRoutes from './routes/mapsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError } from './utils/errors.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
   
 
 const app = express();
@@ -22,6 +27,9 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+// Serve map images from public/maps/
+app.use('/uploads', express.static(path.join(__dirname, 'public')));
 
 app.use('/maps', mapRoutes);
 app.use('/users', userRoutes);     

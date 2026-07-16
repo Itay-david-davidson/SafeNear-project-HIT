@@ -40,6 +40,8 @@ services:
       - DB_PORT=$MYSQL_DOCKER_PORT
     networks:
       - ShelterNetwork
+    volumes:
+      - ./ShelterMonitor/public:/ShelterMonitor/public
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:$NODE_LOCAL_PORT/"]
       interval: 5s

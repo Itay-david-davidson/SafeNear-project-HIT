@@ -29,6 +29,10 @@ export default defineConfig({
       '/users': {
         target: 'http://app:8080',
         changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://app:8080',
+        changeOrigin: true
       }
     }
   },

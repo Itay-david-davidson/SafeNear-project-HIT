@@ -78,3 +78,12 @@ export async function getAdminAuth(req) {
     }
     return reqUserId;
 }
+
+export async function requireAdmin(req, res, next) {
+    try {
+        await getAdminAuth(req);
+        next();
+    } catch (err) {
+        next(err);
+    }
+}
