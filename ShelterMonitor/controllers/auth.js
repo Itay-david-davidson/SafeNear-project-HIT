@@ -81,7 +81,7 @@ export async function getAdminAuth(req) {
 
 export async function requireAdmin(req, res, next) {
     try {
-        await getAdminAuth(req);
+        req.user_id = await getAdminAuth(req);
         next();
     } catch (err) {
         next(err);

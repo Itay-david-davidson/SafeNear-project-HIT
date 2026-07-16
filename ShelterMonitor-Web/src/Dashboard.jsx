@@ -5,6 +5,7 @@ function Dashboard({ user, token, onLogout }) {
   const [shelters, setShelters] = useState([]);
   const [maps, setMaps] = useState([]);
   const [users, setUsers] = useState([]);
+  const [logs, setLogs] = useState([]);
 
   // Loading & Error States
   const [loading, setLoading] = useState(false);
@@ -57,14 +58,20 @@ function Dashboard({ user, token, onLogout }) {
       const dataMaps = await resMaps.json();
       setMaps(dataMaps);
 
-      // Fetch Users (Requires Admin)
+      // Fetch Users & Logs (Requires Admin)
       if (isAdmin) {
-        const resUsers = await fetchWithAuth('/users', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const [resUsers, resLogs] = await Promise.all([
+          fetchWithAuth('/users', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetchWithAuth('/api/logs', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+
         if (resUsers.ok) {
           const dataUsers = await resUsers.json();
           setUsers(dataUsers);
+        }
+        if (resLogs.ok) {
+          const dataLogs = await resLogs.json();
+          setLogs(dataLogs);
         }
       }
     } catch (err) {
@@ -373,12 +380,14 @@ function Dashboard({ user, token, onLogout }) {
             Maps
           </button>
           {isAdmin && (
-            <button
-              className={`menu-item ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => setActiveTab('users')}
-            >
-              User Management
-            </button>
+            <>
+              <div className={`menu-item ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+                Access Control
+              </div>
+              <div className={`menu-item ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>
+                Activity Logs
+              </div>
+            </>
           )}
         </nav>
         <button className="logout-btn" onClick={onLogout}>
@@ -531,7 +540,7 @@ function Dashboard({ user, token, onLogout }) {
               <div style={{ display: 'flex', gap: '10px' }}>
                 {selectedMap && (
                   <button className="btn btn-secondary" onClick={() => setSelectedMap(null)}>
-                    ⬅ Back to Maps
+                    Back to Maps
                   </button>
                 )}
                 {isAdmin && (
@@ -695,6 +704,53 @@ function Dashboard({ user, token, onLogout }) {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+        {/* Tab 5: Activity Logs (Admin Only) */}
+        {activeTab === 'logs' && isAdmin && (
+          <div className="tab-pane">
+            <header className="content-header search-header">
+              <div>
+                <h1>Activity Logs</h1>
+                <p>Monitor system actions performed by administrators.</p>
+              </div>
+            </header>
+
+            <div className="card">
+              {logs.length === 0 ? (
+                <p className="empty-text">No activity logs recorded yet.</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {logs.map(log => (
+                        <tr key={log.id}>
+                          <td>{new Date(log.timestamp).toLocaleString()}</td>
+                          <td><strong>{log.username}</strong></td>
+                          <td><span className="placed-badge">{log.action}</span></td>
+                          <td>
+                            <details style={{ fontSize: '13px', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                              <summary>View Payload</summary>
+                              <pre style={{ marginTop: '8px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                {log.details}
+                              </pre>
+                            </details>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}

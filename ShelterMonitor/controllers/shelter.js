@@ -28,8 +28,9 @@ export async function getShelterById(req, res, next) {
 
 export async function insertShelter(req, res, next) {
     try {
-        const { name, open, location, mapID, x = null, y = null } = req.body;
-        const newShelter = new Shelter(name, open, location, mapID, x, y);
+        const { name, open, location, mapID, map_id, x = null, y = null } = req.body;
+        const actualMapId = map_id !== undefined ? map_id : mapID;
+        const newShelter = new Shelter(name, open, location, actualMapId, x, y);
         await newShelter.save();
         res.json({ message: 'Shelter inserted successfully' });
     } catch (err) {
@@ -40,10 +41,11 @@ export async function insertShelter(req, res, next) {
 export async function updateShelter(req, res, next) {
     try {
         const shelterId = req.params.id;
-        const { name, open, location, mapID, x = null, y = null } = req.body;
+        const { name, open, location, mapID, map_id, x = null, y = null } = req.body;
+        const actualMapId = map_id !== undefined ? map_id : mapID;
         const [results] = await db.execute(
             'UPDATE shelters SET name = ?, open = ?, location = ?, map_id = ?, x = ?, y = ? WHERE id = ?',
-            [name, open, location, mapID, x, y, shelterId]
+            [name, open, location, actualMapId, x, y, shelterId]
         );
         if (results.affectedRows > 0) {
             res.json({ message: 'Shelter updated successfully' });

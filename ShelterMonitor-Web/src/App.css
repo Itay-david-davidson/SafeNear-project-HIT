@@ -116,6 +116,7 @@ body {
   margin: 0 0 8px;
   background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -171,13 +172,13 @@ body {
   width: 100%;
   margin-top: 12px;
   transition: var(--transition-fast);
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 16px rgba(3, 78, 162, 0.3);
 }
 
 .login-button:hover:not(:disabled) {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(3, 78, 162, 0.4);
 }
 
 .login-button:disabled {
@@ -254,6 +255,7 @@ body {
   margin: 0;
   background: linear-gradient(135deg, #fff 0%, var(--accent-color) 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -325,7 +327,7 @@ body {
 .menu-item.active {
   background: var(--accent-color);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(3, 78, 162, 0.25);
 }
 
 .logout-btn {
@@ -471,9 +473,9 @@ body {
 .btn-primary {
   background: var(--accent-color);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(3, 78, 162, 0.2);
 }
-.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 16px rgba(139, 92, 246, 0.35); }
+.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 16px rgba(3, 78, 162, 0.35); }
 
 .btn-secondary {
   background: var(--bg-tertiary);
@@ -666,14 +668,14 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md), inset 0 0 80px rgba(139, 92, 246, 0.04);
+  box-shadow: var(--shadow-md), inset 0 0 80px rgba(3, 78, 162, 0.04);
   background-color: #0c1029;
   /* Blueprint grid */
   background-image:
-    linear-gradient(rgba(139, 92, 246, 0.10) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.10) 1px, transparent 1px),
-    linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(3, 78, 162, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(3, 78, 162, 0.10) 1px, transparent 1px),
+    linear-gradient(rgba(3, 78, 162, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(3, 78, 162, 0.04) 1px, transparent 1px);
   background-size: 80px 80px, 80px 80px, 20px 20px, 20px 20px;
   user-select: none;
 }
@@ -964,8 +966,8 @@ body {
 }
 
 @keyframes pulse {
-  from { filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.15)); }
-  to   { filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.55)); }
+  from { filter: drop-shadow(0 0 4px rgba(3, 78, 162, 0.15)); }
+  to   { filter: drop-shadow(0 0 16px rgba(3, 78, 162, 0.55)); }
 }
 
 @keyframes pinPulse {

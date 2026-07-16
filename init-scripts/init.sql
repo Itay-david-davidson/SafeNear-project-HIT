@@ -25,3 +25,12 @@ CREATE TABLE IF NOT EXISTS `maps` (
 ALTER TABLE `shelters` ADD FOREIGN KEY (`map_id`) REFERENCES `maps` (`id`);
 
 INSERT INTO users (username, password, admin) VALUES ('admin', 'admin123', true);
+
+CREATE TABLE IF NOT EXISTS `logs` (
+  `id` integer PRIMARY KEY AUTO_INCREMENT,
+  `user_id` integer NOT NULL,
+  `action` varchar(255) NOT NULL,
+  `details` text,
+  `timestamp` timestamp DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+);
